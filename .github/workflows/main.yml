@@ -1,0 +1,36 @@
+name: Auto update data.json
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "linh-khe/**"
+      - "generate.js"
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Run generate script
+        run: node generate.js
+
+      - name: Commit updated data.json
+        run: |
+          if git status --porcelain | grep data.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data.json
+            git commit -m "auto: update data.json"
+            git push
+          else
+            echo "No changes in data.json"
+          fi
