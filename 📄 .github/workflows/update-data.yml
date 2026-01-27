@@ -1,27 +1,35 @@
 name: Auto update data.json
 
 on:
+  # Cho phép bấm chạy tay trong tab Actions
+  workflow_dispatch:
+
+  # Tự động chạy khi có thay đổi ảnh hoặc script
   push:
     paths:
       - "linh-khe/**"
       - "generate.js"
 
 jobs:
-  build:
+  update-data:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      # 1. Lấy code về runner
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Cài Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
+      # 3. Chạy script sinh data.json
       - name: Run generate script
         run: node generate.js
 
+      # 4. Commit lại data.json nếu có thay đổi
       - name: Commit updated data.json
         run: |
           if git status --porcelain | grep data.json; then
