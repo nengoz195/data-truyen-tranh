@@ -474,5 +474,47 @@
     "updatedAt": "27/1/2026",
     "folder": "linh-khe/chap-76",
     "totalImages": 19
+  },
+  {
+    "id": 78,
+    "title": "Chương 78",
+    "updatedAt": "27/1/2026",
+    "folder": "linh-khe/chap-78",
+    "totalImages": 17
+  },
+  {
+    "id": 79,
+    "title": "Chương 79",
+    "updatedAt": "27/1/2026",
+    "folder": "linh-khe/chap-79",
+    "totalImages": 16
+  },
+  {
+    "id": 80,
+    "title": "Chương 80",
+    "updatedAt": "27/1/2026",
+    "folder": "linh-khe/chap-80",
+    "totalImages": 14
+  },
+  {
+    "id": 81,
+    "title": "Chương 81",
+    "updatedAt": "27/1/2026",
+    "folder": "linh-khe/chap-81",
+    "totalImages": 12
+  },
+  {
+    "id": 82,
+    "title": "Chương 82",
+    "updatedAt": "27/1/2026",
+    "folder": "linh-khe/chap-82",
+    "totalImages": 14
+  },
+  {
+    "id": 83,
+    "title": "Chương 83",
+    "updatedAt": "27/1/2026",
+    "folder": "linh-khe/chap-83",
+    "totalImages": 14
   }
 ]
