@@ -5,14 +5,14 @@ on:
   push:
     paths:
       - "linh-khe/**"
-      - "lac-nguyet-son-ha/**"  # <--- Đã thêm dòng này để theo dõi folder mới
+      - "lac-nguyet-son-ha/**" # Đảm bảo dòng này có mặt để theo dõi folder mới
       - "generate.js"
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Cấp quyền ghi file cho bot
+      contents: write # Cấp quyền ghi file
 
     steps:
       - name: Checkout repository
@@ -28,19 +28,23 @@ jobs:
 
       - name: Commit updated data
         run: |
-          # Cấu hình bot
+          # 1. Cấu hình bot
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Kiểm tra xem có bất kỳ thay đổi nào không (cho cả 2 file json)
+          # 2. Kiểm tra thay đổi
           if [[ -n $(git status --porcelain) ]]; then
-            echo "📝 Phát hiện thay đổi dữ liệu..."
+            echo "📝 Có thay đổi data, đang xử lý..."
             
-            # Add tất cả file .json (bao gồm cả data.json và data-lnsh.json)
+            # 3. Add file (lấy cả data.json và data-lnsh.json)
             git add *.json
-            
             git commit -m "auto: update manga data files"
-            git push
+            
+            # 4. QUAN TRỌNG: Kéo code mới nhất về trước khi đẩy (Sửa lỗi Fetch First)
+            git pull --rebase origin main
+            
+            # 5. Đẩy lên
+            git push origin main
           else
-            echo "✅ Không có thay đổi nào trong file data."
+            echo "✅ Không có thay đổi nào."
           fi
