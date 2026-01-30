@@ -192,12 +192,12 @@
                         </div>
                     </div>
 
-                    <!-- PREVIEW AREA -->
-                    <div v-if="Object.keys(chapterGroups).length > 0" class="animate-fade-in space-y-4">
+                    <!-- PREVIEW AREA (EDITABLE) -->
+                    <div v-if="uploadQueue.length > 0" class="animate-fade-in space-y-4">
                         <div class="flex justify-between items-end border-b border-white/5 pb-2">
                             <div>
                                 <h3 class="text-lg font-bold text-white">Danh sách chờ tải lên</h3>
-                                <p class="text-xs text-slate-400">Hệ thống tự động đổi tên file theo thứ tự.</p>
+                                <p class="text-xs text-slate-400">Bấm vào tên chương bên dưới để sửa nếu muốn.</p>
                             </div>
                             <button @click="clearFiles" class="text-xs font-medium text-red-400 hover:text-red-300 flex items-center gap-1 py-1 px-2 rounded hover:bg-red-500/10 transition">
                                 <i class="ph ph-trash"></i> Xóa tất cả
@@ -206,28 +206,47 @@
 
                         <div class="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-1 custom-scroll">
                             <!-- Card cho từng chương -->
-                            <div v-for="(files, folderName) in chapterGroups" :key="folderName" class="bg-slate-800/40 border border-white/5 rounded-lg p-4 hover:border-violet-500/30 transition-all group relative overflow-hidden">
+                            <div v-for="(item, index) in uploadQueue" :key="index" class="bg-slate-800/40 border border-white/5 rounded-lg p-4 hover:border-violet-500/30 transition-all group relative overflow-hidden">
                                 <!-- Deco line -->
                                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <div class="flex items-center gap-2 mb-1">
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                    <div class="flex-1 w-full">
+                                        <div class="flex items-center gap-2 mb-2">
                                             <i class="ph-fill ph-folder text-amber-400 text-lg"></i>
-                                            <span class="font-bold text-slate-200">{{ folderName }}</span>
+                                            <span class="font-bold text-slate-400 text-xs uppercase tracking-wide">Nguồn: {{ item.folderName }}</span>
                                         </div>
-                                        <div class="flex items-center gap-2 text-xs font-mono text-slate-400 mt-1">
-                                            <span>Path trên Server:</span>
-                                            <i class="ph-bold ph-arrow-right text-slate-600"></i>
-                                            <span class="text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                                                /{{ selectedStory }}/{{ generateChapterPath(folderName) }}/
-                                            </span>
+                                        
+                                        <!-- Editable Input -->
+                                        <div class="flex items-center gap-2 w-full">
+                                            <span class="text-xs text-slate-500 whitespace-nowrap">Path trên Server:</span>
+                                            <div class="flex items-center bg-slate-900/50 border border-slate-700 rounded px-2 py-1 w-full max-w-md focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/50 transition-all">
+                                                <span class="text-slate-500 text-sm select-none">/{{ selectedStory }}/</span>
+                                                <input 
+                                                    v-model="item.targetName" 
+                                                    type="text" 
+                                                    class="bg-transparent border-none outline-none text-emerald-400 font-mono text-sm w-full placeholder-slate-600"
+                                                    placeholder="nhap-ten-chuong"
+                                                >
+                                                <i class="ph-bold ph-pencil-simple text-slate-600 text-xs ml-2"></i>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="flex flex-col items-end gap-1">
-                                        <span class="text-xs font-bold text-white bg-slate-700 px-2 py-1 rounded-md">{{ files.length }} ảnh</span>
-                                        <span class="text-[10px] text-slate-500">~{{ (files.reduce((a, b) => a + b.size, 0) / 1024 / 1024).toFixed(2) }} MB</span>
+
+                                    <div class="flex flex-row sm:flex-col items-center sm:items-end gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                                        <span class="text-xs font-bold text-white bg-slate-700 px-2 py-1 rounded-md">{{ item.files.length }} ảnh</span>
+                                        <span class="text-[10px] text-slate-500">~{{ (item.files.reduce((a, b) => a + b.size, 0) / 1024 / 1024).toFixed(2) }} MB</span>
+                                        
+                                        <!-- Remove single item button -->
+                                        <button @click="removeItem(index)" class="sm:hidden text-red-400 hover:text-red-300">
+                                            <i class="ph-bold ph-x"></i>
+                                        </button>
                                     </div>
+                                    
+                                    <!-- Desktop remove button -->
+                                    <button @click="removeItem(index)" class="hidden sm:block text-slate-600 hover:text-red-400 transition-colors p-1" title="Bỏ chương này">
+                                        <i class="ph-bold ph-x"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -262,7 +281,7 @@
                         <!-- Button -->
                         <button 
                             @click="uploadAllChapters" 
-                            :disabled="isUploading || Object.keys(chapterGroups).length === 0"
+                            :disabled="isUploading || uploadQueue.length === 0"
                             class="w-full relative group disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden rounded-xl"
                         >
                             <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 group-hover:from-emerald-500 group-hover:to-teal-500 transition-all duration-300"></div>
@@ -297,7 +316,7 @@
 
     </div>
 
-    <!-- Logic Script (Giữ nguyên logic cũ) -->
+    <!-- Logic Script -->
     <script>
         const { createApp, ref, onMounted } = Vue;
 
@@ -306,7 +325,10 @@
                 const config = ref({ owner: '', repo: '', token: '' });
                 const tempConfig = ref({ owner: '', repo: '', token: '' });
                 const selectedStory = ref('linh-khe');
-                const chapterGroups = ref({});
+                
+                // uploadQueue: Array of objects { folderName, targetName, files }
+                const uploadQueue = ref([]);
+                
                 const isUploading = ref(false);
                 const progress = ref(0);
                 const currentStatus = ref('');
@@ -346,34 +368,46 @@
                 const handleFiles = (event) => processInputFiles(event.target.files);
                 const handleDrop = (event) => processInputFiles(event.dataTransfer.files);
 
-                const processInputFiles = (fileList) => {
-                    const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
-                    const groups = {};
-
-                    files.forEach(file => {
-                        const pathParts = file.webkitRelativePath.split('/');
-                        let folderName = pathParts.length >= 2 ? pathParts[pathParts.length - 2] : "Root";
-                        if (!groups[folderName]) groups[folderName] = [];
-                        groups[folderName].push(file);
-                    });
-
-                    for (const key in groups) {
-                        groups[key].sort(naturalSort);
-                    }
-                    chapterGroups.value = groups;
-                };
-
-                const clearFiles = () => {
-                    chapterGroups.value = {};
-                    logs.value = [];
-                    progress.value = 0;
-                    currentStatus.value = '';
-                };
-
                 const generateChapterPath = (folderName) => {
                     const numbers = folderName.match(/\d+(\.\d+)?/); 
                     if (numbers) return `chap-${numbers[0]}`;
                     return folderName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                };
+
+                const processInputFiles = (fileList) => {
+                    const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+                    const tempGroups = {};
+
+                    // Group files by folder
+                    files.forEach(file => {
+                        const pathParts = file.webkitRelativePath.split('/');
+                        let folderName = pathParts.length >= 2 ? pathParts[pathParts.length - 2] : "Root";
+                        if (!tempGroups[folderName]) tempGroups[folderName] = [];
+                        tempGroups[folderName].push(file);
+                    });
+
+                    // Convert groups to array for the Queue
+                    for (const folderName in tempGroups) {
+                        const groupFiles = tempGroups[folderName].sort(naturalSort);
+                        
+                        // Check if this folder is already in queue (optional, here we append)
+                        uploadQueue.value.push({
+                            folderName: folderName,
+                            targetName: generateChapterPath(folderName), // Auto generate default name
+                            files: groupFiles
+                        });
+                    }
+                };
+
+                const removeItem = (index) => {
+                    uploadQueue.value.splice(index, 1);
+                };
+
+                const clearFiles = () => {
+                    uploadQueue.value = [];
+                    logs.value = [];
+                    progress.value = 0;
+                    currentStatus.value = '';
                 };
 
                 const fileToBase64 = (file) => {
@@ -394,13 +428,22 @@
 
                     let totalFiles = 0;
                     let uploadedCount = 0;
-                    for (const key in chapterGroups.value) totalFiles += chapterGroups.value[key].length;
+                    
+                    // Count total files across all queued items
+                    uploadQueue.value.forEach(item => totalFiles += item.files.length);
 
                     try {
-                        for (const folderName in chapterGroups.value) {
-                            const files = chapterGroups.value[folderName];
-                            const cleanChapterName = generateChapterPath(folderName);
+                        // Loop through Queue
+                        for (const item of uploadQueue.value) {
+                            const { targetName, files } = item;
                             
+                            // Validate target name
+                            if(!targetName || targetName.trim() === '') {
+                                addLog(`Bỏ qua folder "${item.folderName}" do tên trống.`, 'error');
+                                continue;
+                            }
+                            const cleanChapterName = targetName.trim();
+
                             for (let i = 0; i < files.length; i++) {
                                 const file = files[i];
                                 const extension = file.name.split('.').pop();
@@ -449,9 +492,9 @@
 
                 return {
                     config, tempConfig, saveConfig, logout,
-                    selectedStory, chapterGroups,
-                    handleFiles, handleDrop, clearFiles, uploadAllChapters,
-                    isUploading, progress, currentStatus, logs, showLogs, generateChapterPath
+                    selectedStory, uploadQueue,
+                    handleFiles, handleDrop, clearFiles, removeItem, uploadAllChapters,
+                    isUploading, progress, currentStatus, logs, showLogs
                 };
             }
         }).mount('#app');
