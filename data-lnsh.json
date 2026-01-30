@@ -82,5 +82,12 @@
     "updatedAt": "30/1/2026",
     "folder": "lac-nguyet-son-ha/chap-12",
     "totalImages": 15
+  },
+  {
+    "id": 13,
+    "title": "Chương 13",
+    "updatedAt": "30/1/2026",
+    "folder": "lac-nguyet-son-ha/chap-13",
+    "totalImages": 1
   }
 ]
