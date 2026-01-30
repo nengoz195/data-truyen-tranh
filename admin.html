@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manga Uploader - Admin Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .input-field { background: #334155; border: 1px solid #475569; color: white; padding: 0.5rem; border-radius: 0.375rem; width: 100%; outline: none; transition: all 0.2s; }
+        .input-field:focus { border-color: #38bdf8; ring: 2px solid #38bdf8; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body>
+    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <div class="w-full max-w-2xl glass rounded-xl shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-slate-800 p-6 border-b border-slate-700 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-sky-400 flex items-center gap-2">
+                    <i class="ph ph-cloud-arrow-up text-3xl"></i> Manga Uploader
+                </h1>
+                
+                <!-- Nút cấu hình/Đăng xuất -->
+                <div v-if="config.token" class="flex items-center gap-3">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-xs text-slate-400">Đang kết nối tới:</p>
+                        <p class="text-sm font-bold text-green-400">{{ config.repo }}</p>
+                    </div>
+                    <button @click="logout" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-lg transition" title="Xóa Token & Đăng xuất">
+                        <i class="ph ph-sign-out text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Màn hình cấu hình (Chỉ hiện khi chưa có Token) -->
+            <div v-if="!config.token" class="p-8 bg-slate-900/50">
+                <div class="text-center mb-6">
+                    <i class="ph ph-lock-key text-5xl text-yellow-400 mb-2"></i>
+                    <h2 class="text-xl font-bold text-white">Cấu hình kết nối</h2>
+                    <p class="text-sm text-slate-400 mt-1">
+                        Do chạy trên trình duyệt nên bạn cần cung cấp Token để kết nối tới GitHub.
+                        <br>Token sẽ được lưu an toàn trên máy của bạn.
+                    </p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-300 mb-1">GitHub Username</label>
+                        <input v-model="tempConfig.owner" type="text" class="input-field" placeholder="Ví dụ: nguyen-van-a">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-300 mb-1">Repository Name</label>
+                        <input v-model="tempConfig.repo" type="text" class="input-field" placeholder="Ví dụ: manga-storage">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-300 mb-1">
+                            Personal Access Token
+                            <a href="https://github.com/settings/tokens/new?scopes=repo&description=MangaUploader" target="_blank" class="text-sky-400 hover:underline text-xs ml-2 font-normal">
+                                (Bấm vào đây để tạo nhanh Token)
+                            </a>
+                        </label>
+                        <input v-model="tempConfig.token" type="password" class="input-field" placeholder="ghp_xxxxxxxxxxxxxxxxx">
+                        <p class="text-xs text-slate-500 mt-1 italic">Chọn dòng "repo" khi tạo token.</p>
+                    </div>
+                    <button @click="saveConfig" class="w-full bg-sky-600 hover:bg-sky-500 text-white py-3 px-4 rounded-lg transition font-bold mt-2">
+                        Lưu & Kết Nối
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Upload Form (Chỉ hiện khi ĐÃ CÓ Token) -->
+            <div class="p-6 space-y-6" v-else>
+                <!-- Story Selection -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Chọn Truyện</label>
+                        <select v-model="selectedStory" class="input-field cursor-pointer">
+                            <option value="linh-khe">Linh Khế</option>
+                            <option value="lac-nguyet-son-ha">Lạc Nguyệt Sơn Hà</option>
+                            <!-- Thêm truyện mới vào đây -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Số Chương (Ví dụ: 10)</label>
+                        <input v-model.number="chapNum" type="number" class="input-field" placeholder="Nhập số chương...">
+                    </div>
+                </div>
+
+                <!-- File Dropzone -->
+                <div 
+                    class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center hover:border-sky-500 transition cursor-pointer bg-slate-800/50"
+                    @click="$refs.fileInput.click()"
+                    @dragover.prevent @drop.prevent="handleDrop"
+                >
+                    <input ref="fileInput" type="file" multiple accept="image/*" class="hidden" @change="handleFiles">
+                    <i class="ph ph-images text-5xl text-slate-400 mb-3"></i>
+                    <p class="text-slate-300 font-medium">Click để chọn ảnh hoặc kéo thả vào đây</p>
+                    <p class="text-sm text-slate-500 mt-1">Hỗ trợ: JPG, PNG, WEBP</p>
+                </div>
+
+                <!-- File List Preview -->
+                <div v-if="files.length > 0" class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-sky-400">{{ files.length }} ảnh đã chọn</span>
+                        <button @click="files = []" class="text-red-400 text-xs hover:underline">Xóa tất cả</button>
+                    </div>
+                    <div class="max-h-40 overflow-y-auto space-y-2 pr-2 custom-scroll">
+                        <div v-for="(file, index) in files" :key="index" class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
+                            <span class="text-xs truncate max-w-[200px]">{{ file.name }}</span>
+                            <span class="text-xs text-slate-500">{{ (file.size / 1024).toFixed(1) }} KB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar & Log -->
+                <div v-if="isUploading" class="space-y-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>Đang tải lên...</span>
+                        <span>{{ progress }}%</span>
+                    </div>
+                    <div class="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                        <div class="bg-sky-500 h-2.5 rounded-full transition-all duration-300" :style="{ width: progress + '%' }"></div>
+                    </div>
+                    <p class="text-xs text-slate-400 font-mono truncate">{{ currentStatus }}</p>
+                </div>
+
+                <!-- Action Button -->
+                <button 
+                    @click="uploadFiles" 
+                    :disabled="isUploading || files.length === 0 || !chapNum"
+                    class="w-full bg-green-600 hover:bg-green-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2"
+                >
+                    <i v-if="isUploading" class="ph ph-spinner animate-spin text-xl"></i>
+                    <i v-else class="ph ph-upload-simple text-xl"></i>
+                    {{ isUploading ? 'Đang Xử Lý...' : 'Đăng Chương Mới' }}
+                </button>
+            </div>
+        </div>
+        
+        <p class="mt-4 text-xs text-slate-500">
+            Dữ liệu được gửi trực tiếp từ máy bạn lên GitHub API.
+        </p>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                // Config thật (đã lưu)
+                const config = ref({ owner: '', repo: '', token: '' });
+                // Config tạm (đang nhập)
+                const tempConfig = ref({ owner: '', repo: '', token: '' });
+                
+                const selectedStory = ref('linh-khe');
+                const chapNum = ref('');
+                const files = ref([]);
+                const isUploading = ref(false);
+                const progress = ref(0);
+                const currentStatus = ref('');
+
+                // Load config from localStorage
+                onMounted(() => {
+                    const saved = localStorage.getItem('manga_uploader_config');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        config.value = parsed;
+                        tempConfig.value = { ...parsed };
+                    }
+                });
+
+                const saveConfig = () => {
+                    if(!tempConfig.value.owner || !tempConfig.value.repo || !tempConfig.value.token) {
+                        return alert("Vui lòng điền đầy đủ thông tin!");
+                    }
+                    config.value = { ...tempConfig.value };
+                    localStorage.setItem('manga_uploader_config', JSON.stringify(config.value));
+                };
+
+                const logout = () => {
+                    if(confirm("Bạn có chắc muốn xóa cấu hình và đăng xuất?")) {
+                        localStorage.removeItem('manga_uploader_config');
+                        config.value = { owner: '', repo: '', token: '' };
+                        tempConfig.value = { owner: '', repo: '', token: '' };
+                    }
+                };
+
+                const handleFiles = (event) => {
+                    const newFiles = Array.from(event.target.files);
+                    files.value = [...files.value, ...newFiles].sort((a, b) => {
+                        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+                    });
+                };
+
+                const handleDrop = (event) => {
+                    const newFiles = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                    files.value = [...files.value, ...newFiles].sort((a, b) => {
+                        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+                    });
+                };
+
+                const fileToBase64 = (file) => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = () => resolve(reader.result.split(',')[1]);
+                        reader.onerror = error => reject(error);
+                    });
+                };
+
+                const uploadFiles = async () => {
+                    if (!config.value.token) return;
+                    
+                    isUploading.value = true;
+                    progress.value = 0;
+                    
+                    const folderPath = `${selectedStory.value}/chap-${chapNum.value}`;
+                    const total = files.value.length;
+                    
+                    try {
+                        for (let i = 0; i < total; i++) {
+                            const file = files.value[i];
+                            const content = await fileToBase64(file);
+                            const fileName = file.name; 
+                            const path = `${folderPath}/${fileName}`;
+                            
+                            currentStatus.value = `Đang tải lên: ${fileName}...`;
+
+                            const url = `https://api.github.com/repos/${config.value.owner}/${config.value.repo}/contents/${path}`;
+                            
+                            const response = await fetch(url, {
+                                method: 'PUT',
+                                headers: {
+                                    'Authorization': `Bearer ${config.value.token}`,
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/vnd.github.v3+json'
+                                },
+                                body: JSON.stringify({
+                                    message: `Add ${selectedStory.value} chapter ${chapNum.value} - ${fileName}`,
+                                    content: content
+                                })
+                            });
+
+                            if (!response.ok) {
+                                // Nếu file đã tồn tại (422) thì bỏ qua hoặc báo lỗi tùy logic. Ở đây ta báo lỗi.
+                                const err = await response.json();
+                                throw new Error(err.message);
+                            }
+
+                            progress.value = Math.round(((i + 1) / total) * 100);
+                        }
+                        
+                        currentStatus.value = "Hoàn tất! Đợi GitHub Action cập nhật data...";
+                        alert(`Đã đăng thành công Chương ${chapNum.value} lên GitHub!`);
+                        files.value = [];
+                        chapNum.value = '';
+
+                    } catch (error) {
+                        console.error(error);
+                        alert(`Lỗi: ${error.message}`);
+                        currentStatus.value = "Có lỗi xảy ra.";
+                    } finally {
+                        isUploading.value = false;
+                    }
+                };
+
+                return {
+                    config, tempConfig, saveConfig, logout,
+                    selectedStory, chapNum, files, 
+                    handleFiles, handleDrop, uploadFiles,
+                    isUploading, progress, currentStatus
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
