@@ -32,7 +32,7 @@
     "title": "Chương 5",
     "updatedAt": "30/1/2026",
     "folder": "lac-nguyet-son-ha/chap-5",
-    "totalImages": 10
+    "totalImages": 15
   },
   {
     "id": 6,
@@ -40,5 +40,12 @@
     "updatedAt": "30/1/2026",
     "folder": "lac-nguyet-son-ha/chap-6",
     "totalImages": 18
+  },
+  {
+    "id": 7,
+    "title": "Chương 7",
+    "updatedAt": "30/1/2026",
+    "folder": "lac-nguyet-son-ha/chap-7",
+    "totalImages": 4
   }
 ]
