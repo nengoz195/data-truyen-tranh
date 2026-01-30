@@ -5,11 +5,14 @@ on:
   push:
     paths:
       - "linh-khe/**"
+      - "lac-nguyet-son-ha/**"  # <--- Đã thêm dòng này để theo dõi folder mới
       - "generate.js"
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Cấp quyền ghi file cho bot
 
     steps:
       - name: Checkout repository
@@ -18,19 +21,26 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Run generate script
         run: node generate.js
 
-      - name: Commit updated data.json
+      - name: Commit updated data
         run: |
-          if git status --porcelain | grep data.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add data.json
-            git commit -m "auto: update data.json"
+          # Cấu hình bot
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Kiểm tra xem có bất kỳ thay đổi nào không (cho cả 2 file json)
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "📝 Phát hiện thay đổi dữ liệu..."
+            
+            # Add tất cả file .json (bao gồm cả data.json và data-lnsh.json)
+            git add *.json
+            
+            git commit -m "auto: update manga data files"
             git push
           else
-            echo "No changes in data.json"
+            echo "✅ Không có thay đổi nào trong file data."
           fi
