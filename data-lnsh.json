@@ -4,6 +4,13 @@
     "title": "Chương 1",
     "updatedAt": "30/1/2026",
     "folder": "lac-nguyet-son-ha/chap-1",
-    "totalImages": 10
+    "totalImages": 15
+  },
+  {
+    "id": 6,
+    "title": "Chương 6",
+    "updatedAt": "30/1/2026",
+    "folder": "lac-nguyet-son-ha/chap-6",
+    "totalImages": 1
   }
 ]
