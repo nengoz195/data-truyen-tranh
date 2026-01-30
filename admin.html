@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manga Uploader - Admin Dashboard</title>
-    <!-- Tailwind CSS -->
+    <title>Manga Uploader - Multi Chapter</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
         body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', sans-serif; }
@@ -18,115 +15,90 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
     </style>
 </head>
 <body>
     <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
         
-        <div class="w-full max-w-2xl glass rounded-xl shadow-2xl overflow-hidden">
-            <!-- Header -->
+        <div class="w-full max-w-3xl glass rounded-xl shadow-2xl overflow-hidden">
             <div class="bg-slate-800 p-6 border-b border-slate-700 flex justify-between items-center">
                 <h1 class="text-2xl font-bold text-sky-400 flex items-center gap-2">
-                    <i class="ph ph-cloud-arrow-up text-3xl"></i> Manga Uploader
+                    <i class="ph ph-stack-overflow text-3xl"></i> Manga Batch Uploader
                 </h1>
                 
-                <!-- Nút cấu hình/Đăng xuất -->
                 <div v-if="config.token" class="flex items-center gap-3">
                     <div class="text-right hidden sm:block">
-                        <p class="text-xs text-slate-400">Đang kết nối tới:</p>
+                        <p class="text-xs text-slate-400">Repo:</p>
                         <p class="text-sm font-bold text-green-400">{{ config.repo }}</p>
                     </div>
-                    <button @click="logout" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-lg transition" title="Xóa Token & Đăng xuất">
+                    <button @click="logout" class="bg-red-500/20 hover:bg-red-500/40 text-red-400 p-2 rounded-lg transition">
                         <i class="ph ph-sign-out text-xl"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Màn hình cấu hình (Chỉ hiện khi chưa có Token) -->
             <div v-if="!config.token" class="p-8 bg-slate-900/50">
                 <div class="text-center mb-6">
                     <i class="ph ph-lock-key text-5xl text-yellow-400 mb-2"></i>
-                    <h2 class="text-xl font-bold text-white">Cấu hình kết nối</h2>
-                    <p class="text-sm text-slate-400 mt-1">
-                        Do chạy trên trình duyệt nên bạn cần cung cấp Token để kết nối tới GitHub.
-                        <br>Token sẽ được lưu an toàn trên máy của bạn.
-                    </p>
+                    <h2 class="text-xl font-bold text-white">Cấu hình kết nối GitHub</h2>
                 </div>
-                
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold text-slate-300 mb-1">GitHub Username</label>
-                        <input v-model="tempConfig.owner" type="text" class="input-field" placeholder="Ví dụ: nguyen-van-a">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-300 mb-1">Repository Name</label>
-                        <input v-model="tempConfig.repo" type="text" class="input-field" placeholder="Ví dụ: manga-storage">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-slate-300 mb-1">
-                            Personal Access Token
-                            <a href="https://github.com/settings/tokens/new?scopes=repo&description=MangaUploader" target="_blank" class="text-sky-400 hover:underline text-xs ml-2 font-normal">
-                                (Bấm vào đây để tạo nhanh Token)
-                            </a>
-                        </label>
-                        <input v-model="tempConfig.token" type="password" class="input-field" placeholder="ghp_xxxxxxxxxxxxxxxxx">
-                        <p class="text-xs text-slate-500 mt-1 italic">Chọn dòng "repo" khi tạo token.</p>
-                    </div>
-                    <button @click="saveConfig" class="w-full bg-sky-600 hover:bg-sky-500 text-white py-3 px-4 rounded-lg transition font-bold mt-2">
-                        Lưu & Kết Nối
-                    </button>
+                    <input v-model="tempConfig.owner" type="text" class="input-field" placeholder="GitHub Username">
+                    <input v-model="tempConfig.repo" type="text" class="input-field" placeholder="Repository Name">
+                    <input v-model="tempConfig.token" type="password" class="input-field" placeholder="Personal Access Token (ghp_...)">
+                    <button @click="saveConfig" class="w-full bg-sky-600 hover:bg-sky-500 text-white py-3 px-4 rounded-lg font-bold mt-2">Lưu & Kết Nối</button>
                 </div>
             </div>
 
-            <!-- Main Upload Form (Chỉ hiện khi ĐÃ CÓ Token) -->
             <div class="p-6 space-y-6" v-else>
-                <!-- Story Selection -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Chọn Truyện</label>
-                        <select v-model="selectedStory" class="input-field cursor-pointer">
-                            <option value="linh-khe">Linh Khế</option>
-                            <option value="lac-nguyet-son-ha">Lạc Nguyệt Sơn Hà</option>
-                            <!-- Thêm truyện mới vào đây -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Chọn Truyện (Target Folder)</label>
+                    <select v-model="selectedStory" class="input-field cursor-pointer">
+                        <option value="linh-khe">Linh Khế</option>
+                        <option value="lac-nguyet-son-ha">Lạc Nguyệt Sơn Hà</option>
                         </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Số Chương (Ví dụ: 10)</label>
-                        <input v-model.number="chapNum" type="number" class="input-field" placeholder="Nhập số chương...">
-                    </div>
                 </div>
 
-                <!-- File Dropzone -->
                 <div 
                     class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center hover:border-sky-500 transition cursor-pointer bg-slate-800/50"
                     @click="$refs.fileInput.click()"
                     @dragover.prevent @drop.prevent="handleDrop"
                 >
-                    <input ref="fileInput" type="file" multiple accept="image/*" class="hidden" @change="handleFiles">
-                    <i class="ph ph-images text-5xl text-slate-400 mb-3"></i>
-                    <p class="text-slate-300 font-medium">Click để chọn ảnh hoặc kéo thả vào đây</p>
-                    <p class="text-sm text-slate-500 mt-1">Hỗ trợ: JPG, PNG, WEBP</p>
+                    <input ref="fileInput" type="file" multiple webkitdirectory directory class="hidden" @change="handleFiles">
+                    <i class="ph ph-folder-notch-plus text-5xl text-slate-400 mb-3"></i>
+                    <p class="text-slate-300 font-medium">Click chọn thư mục chứa các chương</p>
+                    <p class="text-sm text-slate-500 mt-1">Hệ thống sẽ tự nhận diện từng chương và đổi tên file</p>
                 </div>
 
-                <!-- File List Preview -->
-                <div v-if="files.length > 0" class="space-y-3">
+                <div v-if="Object.keys(chapterGroups).length > 0" class="space-y-3">
                     <div class="flex justify-between items-center">
-                        <span class="text-sm font-bold text-sky-400">{{ files.length }} ảnh đã chọn</span>
-                        <button @click="files = []" class="text-red-400 text-xs hover:underline">Xóa tất cả</button>
+                        <span class="text-sm font-bold text-sky-400">Đã tìm thấy {{ Object.keys(chapterGroups).length }} chương</span>
+                        <button @click="clearFiles" class="text-red-400 text-xs hover:underline">Xóa tất cả</button>
                     </div>
-                    <div class="max-h-40 overflow-y-auto space-y-2 pr-2 custom-scroll">
-                        <div v-for="(file, index) in files" :key="index" class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
-                            <span class="text-xs truncate max-w-[200px]">{{ file.name }}</span>
-                            <span class="text-xs text-slate-500">{{ (file.size / 1024).toFixed(1) }} KB</span>
+                    
+                    <div class="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scroll">
+                        <div v-for="(files, folderName) in chapterGroups" :key="folderName" class="bg-slate-800 p-3 rounded border border-slate-700">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex items-center gap-2">
+                                    <i class="ph ph-folder-open text-yellow-500"></i>
+                                    <span class="font-bold text-sm text-white">{{ folderName }}</span>
+                                    <i class="ph ph-arrow-right text-slate-500 text-xs"></i>
+                                    <span class="font-mono text-xs text-green-400 bg-green-900/30 px-1 rounded">
+                                        {{ generateChapterPath(folderName) }}
+                                    </span>
+                                </div>
+                                <span class="text-xs text-slate-400">{{ files.length }} ảnh</span>
+                            </div>
+                            <div class="text-xs text-slate-500 pl-6">
+                                Ví dụ: {{ files[0].name }} ➝ 001.{{ files[0].name.split('.').pop() }}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Progress Bar & Log -->
                 <div v-if="isUploading" class="space-y-2">
                     <div class="flex justify-between text-xs text-slate-400">
-                        <span>Đang tải lên...</span>
+                        <span>Tổng tiến độ</span>
                         <span>{{ progress }}%</span>
                     </div>
                     <div class="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
@@ -135,42 +107,42 @@
                     <p class="text-xs text-slate-400 font-mono truncate">{{ currentStatus }}</p>
                 </div>
 
-                <!-- Action Button -->
                 <button 
-                    @click="uploadFiles" 
-                    :disabled="isUploading || files.length === 0 || !chapNum"
+                    @click="uploadAllChapters" 
+                    :disabled="isUploading || Object.keys(chapterGroups).length === 0"
                     class="w-full bg-green-600 hover:bg-green-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg shadow-lg transition flex items-center justify-center gap-2"
                 >
                     <i v-if="isUploading" class="ph ph-spinner animate-spin text-xl"></i>
-                    <i v-else class="ph ph-upload-simple text-xl"></i>
-                    {{ isUploading ? 'Đang Xử Lý...' : 'Đăng Chương Mới' }}
+                    <i v-else class="ph ph-cloud-arrow-up text-xl"></i>
+                    {{ isUploading ? 'Đang Tải Lên...' : 'Bắt Đầu Upload' }}
                 </button>
             </div>
         </div>
         
-        <p class="mt-4 text-xs text-slate-500">
-            Dữ liệu được gửi trực tiếp từ máy bạn lên GitHub API.
-        </p>
+        <div v-if="logs.length > 0" class="w-full max-w-3xl mt-4 bg-black/50 p-4 rounded-lg text-xs font-mono text-slate-300 h-32 overflow-y-auto">
+            <div v-for="(log, i) in logs" :key="i" :class="log.type === 'error' ? 'text-red-400' : 'text-slate-300'">
+                [{{ new Date().toLocaleTimeString() }}] {{ log.msg }}
+            </div>
+        </div>
     </div>
 
     <script>
-        const { createApp, ref, onMounted } = Vue;
+        const { createApp, ref, onMounted, computed } = Vue;
 
         createApp({
             setup() {
-                // Config thật (đã lưu)
                 const config = ref({ owner: '', repo: '', token: '' });
-                // Config tạm (đang nhập)
                 const tempConfig = ref({ owner: '', repo: '', token: '' });
-                
                 const selectedStory = ref('linh-khe');
-                const chapNum = ref('');
-                const files = ref([]);
+                
+                // chapterGroups: { "Folder Tên Gốc": [File, File, ...] }
+                const chapterGroups = ref({});
+                
                 const isUploading = ref(false);
                 const progress = ref(0);
                 const currentStatus = ref('');
+                const logs = ref([]);
 
-                // Load config from localStorage
                 onMounted(() => {
                     const saved = localStorage.getItem('manga_uploader_config');
                     if (saved) {
@@ -181,33 +153,75 @@
                 });
 
                 const saveConfig = () => {
-                    if(!tempConfig.value.owner || !tempConfig.value.repo || !tempConfig.value.token) {
-                        return alert("Vui lòng điền đầy đủ thông tin!");
-                    }
+                    if(!tempConfig.value.owner || !tempConfig.value.token) return alert("Thiếu thông tin!");
                     config.value = { ...tempConfig.value };
                     localStorage.setItem('manga_uploader_config', JSON.stringify(config.value));
                 };
 
                 const logout = () => {
-                    if(confirm("Bạn có chắc muốn xóa cấu hình và đăng xuất?")) {
-                        localStorage.removeItem('manga_uploader_config');
-                        config.value = { owner: '', repo: '', token: '' };
-                        tempConfig.value = { owner: '', repo: '', token: '' };
-                    }
+                    localStorage.removeItem('manga_uploader_config');
+                    config.value = { owner: '', repo: '', token: '' };
+                };
+
+                const addLog = (msg, type = 'info') => {
+                    logs.value.unshift({ msg, type });
+                };
+
+                // Hàm sắp xếp tự nhiên (1, 2, 10 thay vì 1, 10, 2)
+                const naturalSort = (a, b) => {
+                    return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
                 };
 
                 const handleFiles = (event) => {
-                    const newFiles = Array.from(event.target.files);
-                    files.value = [...files.value, ...newFiles].sort((a, b) => {
-                        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-                    });
+                    processInputFiles(event.target.files);
                 };
 
                 const handleDrop = (event) => {
-                    const newFiles = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-                    files.value = [...files.value, ...newFiles].sort((a, b) => {
-                        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+                    processInputFiles(event.dataTransfer.files);
+                };
+
+                // Xử lý logic gom nhóm
+                const processInputFiles = (fileList) => {
+                    const files = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+                    const groups = {};
+
+                    files.forEach(file => {
+                        // webkitRelativePath dạng: "FolderCha/Chapter 1/01.jpg"
+                        const pathParts = file.webkitRelativePath.split('/');
+                        let folderName = "Uncategorized";
+
+                        // Nếu có cấu trúc thư mục, lấy folder chứa trực tiếp file làm tên chương
+                        if (pathParts.length >= 2) {
+                            folderName = pathParts[pathParts.length - 2];
+                        }
+
+                        if (!groups[folderName]) groups[folderName] = [];
+                        groups[folderName].push(file);
                     });
+
+                    // Sắp xếp file trong từng group ngay lập tức
+                    for (const key in groups) {
+                        groups[key].sort(naturalSort);
+                    }
+
+                    chapterGroups.value = groups;
+                };
+
+                const clearFiles = () => {
+                    chapterGroups.value = {};
+                    logs.value = [];
+                    progress.value = 0;
+                };
+
+                // Logic tạo tên folder chuẩn: "Chapter 10" -> "chap-10"
+                const generateChapterPath = (folderName) => {
+                    // Lấy tất cả số trong tên folder
+                    const numbers = folderName.match(/\d+(\.\d+)?/); 
+                    if (numbers) {
+                        return `chap-${numbers[0]}`;
+                    }
+                    // Nếu không có số, giữ nguyên và slugify (bỏ dấu, thay space bằng dash)
+                    return folderName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
                 };
 
                 const fileToBase64 = (file) => {
@@ -215,61 +229,75 @@
                         const reader = new FileReader();
                         reader.readAsDataURL(file);
                         reader.onload = () => resolve(reader.result.split(',')[1]);
-                        reader.onerror = error => reject(error);
+                        reader.onerror = reject;
                     });
                 };
 
-                const uploadFiles = async () => {
+                const uploadAllChapters = async () => {
                     if (!config.value.token) return;
-                    
                     isUploading.value = true;
                     progress.value = 0;
-                    
-                    const folderPath = `${selectedStory.value}/chap-${chapNum.value}`;
-                    const total = files.value.length;
-                    
+                    logs.value = [];
+
+                    // Tính tổng số file để làm thanh progress
+                    let totalFiles = 0;
+                    let uploadedCount = 0;
+                    for (const key in chapterGroups.value) totalFiles += chapterGroups.value[key].length;
+
                     try {
-                        for (let i = 0; i < total; i++) {
-                            const file = files.value[i];
-                            const content = await fileToBase64(file);
-                            const fileName = file.name; 
-                            const path = `${folderPath}/${fileName}`;
+                        // Duyệt qua từng folder (chương)
+                        for (const folderName in chapterGroups.value) {
+                            const files = chapterGroups.value[folderName];
+                            const cleanChapterName = generateChapterPath(folderName); // VD: chap-10
                             
-                            currentStatus.value = `Đang tải lên: ${fileName}...`;
+                            // Duyệt qua từng file trong chương
+                            for (let i = 0; i < files.length; i++) {
+                                const file = files[i];
+                                const extension = file.name.split('.').pop();
+                                
+                                // Đổi tên file: 001.jpg, 002.png ...
+                                const newFileName = (i + 1).toString().padStart(3, '0') + '.' + extension;
+                                
+                                // Đường dẫn cuối cùng: linh-khe/chap-10/001.jpg
+                                const finalPath = `${selectedStory.value}/${cleanChapterName}/${newFileName}`;
 
-                            const url = `https://api.github.com/repos/${config.value.owner}/${config.value.repo}/contents/${path}`;
-                            
-                            const response = await fetch(url, {
-                                method: 'PUT',
-                                headers: {
-                                    'Authorization': `Bearer ${config.value.token}`,
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/vnd.github.v3+json'
-                                },
-                                body: JSON.stringify({
-                                    message: `Add ${selectedStory.value} chapter ${chapNum.value} - ${fileName}`,
-                                    content: content
-                                })
-                            });
+                                currentStatus.value = `[${cleanChapterName}] Uploading ${newFileName}...`;
+                                
+                                const content = await fileToBase64(file);
+                                
+                                const url = `https://api.github.com/repos/${config.value.owner}/${config.value.repo}/contents/${finalPath}`;
+                                
+                                const response = await fetch(url, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Authorization': `Bearer ${config.value.token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        message: `Upload ${selectedStory.value} - ${cleanChapterName} - ${newFileName}`,
+                                        content: content
+                                    })
+                                });
 
-                            if (!response.ok) {
-                                // Nếu file đã tồn tại (422) thì bỏ qua hoặc báo lỗi tùy logic. Ở đây ta báo lỗi.
-                                const err = await response.json();
-                                throw new Error(err.message);
+                                if (!response.ok) {
+                                    // 422 nghĩa là file có thể đã tồn tại hoặc lỗi SHA, ta log lại và tiếp tục
+                                    const err = await response.json();
+                                    addLog(`Lỗi ${finalPath}: ${err.message}`, 'error');
+                                } else {
+                                    addLog(`OK: ${finalPath}`);
+                                }
+
+                                uploadedCount++;
+                                progress.value = Math.round((uploadedCount / totalFiles) * 100);
                             }
-
-                            progress.value = Math.round(((i + 1) / total) * 100);
                         }
                         
-                        currentStatus.value = "Hoàn tất! Đợi GitHub Action cập nhật data...";
-                        alert(`Đã đăng thành công Chương ${chapNum.value} lên GitHub!`);
-                        files.value = [];
-                        chapNum.value = '';
-
+                        alert("Hoàn tất quá trình tải lên!");
+                        currentStatus.value = "Đã xong.";
+                        
                     } catch (error) {
                         console.error(error);
-                        alert(`Lỗi: ${error.message}`);
-                        currentStatus.value = "Có lỗi xảy ra.";
+                        alert(`Lỗi hệ thống: ${error.message}`);
                     } finally {
                         isUploading.value = false;
                     }
@@ -277,9 +305,9 @@
 
                 return {
                     config, tempConfig, saveConfig, logout,
-                    selectedStory, chapNum, files, 
-                    handleFiles, handleDrop, uploadFiles,
-                    isUploading, progress, currentStatus
+                    selectedStory, chapterGroups,
+                    handleFiles, handleDrop, clearFiles, uploadAllChapters,
+                    isUploading, progress, currentStatus, logs, generateChapterPath
                 };
             }
         }).mount('#app');
