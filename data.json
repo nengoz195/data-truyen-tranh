@@ -669,7 +669,7 @@
     "title": "Chương 97",
     "updatedAt": "1/2/2026",
     "folder": "linh-khe/chap-97",
-    "totalImages": 14
+    "totalImages": 15
   },
   {
     "id": 98,
@@ -683,7 +683,14 @@
     "title": "Chương 99",
     "updatedAt": "1/2/2026",
     "folder": "linh-khe/chap-99",
-    "totalImages": 9
+    "totalImages": 13
+  },
+  {
+    "id": 100,
+    "title": "Chương 100",
+    "updatedAt": "1/2/2026",
+    "folder": "linh-khe/chap-100",
+    "totalImages": 14
   },
   {
     "id": 251,
